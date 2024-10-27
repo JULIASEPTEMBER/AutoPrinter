@@ -137,6 +137,7 @@
     <ClInclude Include="CWavAnalyzing.h" />
     <ClInclude Include="FileView.h" />
     <ClInclude Include="GB2312.h" />
+    <ClInclude Include="GB2312BOLDREGULAR.H" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="OutputWnd.h" />
     <ClInclude Include="PrintingAnalzye.h" />

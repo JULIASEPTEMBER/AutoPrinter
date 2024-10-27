@@ -153,6 +153,9 @@
     <ClInclude Include="CPrinterView.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="GB2312BOLDREGULAR.H">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AutoPrinter.cpp">

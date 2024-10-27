@@ -21,12 +21,14 @@
 #include "CWavAnalyzing.h"
 #include "BasicOperation.h"
 #include "CPrinterView.h"
+#include "GB2312BOLDREGULAR.H"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
 
 CWavAnalyzing m_WavAnalyzing;
+CPrinterView m_PrinterView;
 // CAutoPrinterView
 IMPLEMENT_DYNCREATE(CAutoPrinterView, CView)
 
@@ -306,7 +308,47 @@ IMPLEMENT_DYNCREATE(CAutoPrinterView, CView)
 		break;
 		case 't':
 		{
+			char cString[] = "山河破碎风飘絮，身世浮沉雨打萍112 3#$$^%*&";
+			int len = strlen(cString);
+			
+			POINT pt;  //
 
+			pt.x = 100;
+			pt.y = 50;
+			m_PrinterView._LoadLib(m_hWnd, pt, "HZK16S", cString);
+
+			pt.x = 100;
+			pt.y += 20;
+			m_PrinterView._LoadLib(m_hWnd, pt, "HZK16H", cString);
+
+			pt.x = 100;
+			pt.y += 20;
+			m_PrinterView._FormatInfo(m_hWnd, cString, (char*)GB2312_BOLD_Def, pt);
+			
+			pt.x = 100;
+			pt.y += 20;
+			m_PrinterView._FormatInfo(m_hWnd, cString, (char*)GB2312_REGULAR_Def, pt);
+
+			//
+			//pt.x = 100;
+			//pt.y += 20;
+			//m_PrinterView._LoadLib(m_hWnd, pt, "HZK16S", cString);
+			//pt.x = 100;
+			//pt.y += 20;
+			//m_PrinterView._LoadLib(m_hWnd, pt, "HZK16F", cString);
+			//pt.x = 100;
+			//pt.y += 20;
+			//m_PrinterView._LoadLib(m_hWnd, pt, "HZK16H", cString);
+			//pt.x = 100;
+			//pt.y += 20;
+			//m_PrinterView._LoadLib(m_hWnd, pt, "HZK16K", cString);
+			//pt.x = 100;
+			//pt.y += 20;
+			//m_PrinterView._LoadLib(m_hWnd, pt, "HZK16X", cString);
+
+			m_PrinterView.outputFontInText("HZK16S", "GB2312_REGULAR");
+			m_PrinterView.outputFontInText("HZK16H", "GB2312_BOLD");
+			m_PrinterView.outputFontInText("HZK16C", "GB2312_BOLDletter");
 		}
 			break;
 		case 'k':
