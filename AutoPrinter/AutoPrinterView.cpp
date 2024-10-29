@@ -306,6 +306,9 @@ IMPLEMENT_DYNCREATE(CAutoPrinterView, CView)
 			::DeleteDC(dc);
 		}
 		break;
+		case 'z':
+			m_PrinterView._StringWithFont(m_hWnd);
+			break;
 		case 't':
 		{
 			char cString[] = "山河破碎风飘絮，身世浮沉雨打萍112 3#$$^%*&";

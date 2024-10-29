@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "CPrinterView.h"
+#include "BasicOperation.h"
+#include "GB2312BOLDREGULAR.H"
 
 BYTE info[300000];
 char stringOutput[1000000];
@@ -21,7 +23,7 @@ void CPrinterView::_LoadLib(HWND hWnd, POINT pt, char* font, char* string)
 void CPrinterView::_FormatInfo(HWND m_hWnd, char* cString, char* font, POINT pt)
 {
 	HDC dc = ::GetDC(m_hWnd);
-	BYTE* bytebeg;
+	char* bytebeg;
 	int wantpixel;
 	int siglesize = fontHeight * fontWidth / 8;
 
@@ -31,7 +33,7 @@ void CPrinterView::_FormatInfo(HWND m_hWnd, char* cString, char* font, POINT pt)
 		UINT low = (Get & 0xff) - 0xA1;
 		UINT delta = 6 * 16 - 2;
 		UINT resultCal = high * delta + low;
-		 resultCal = high * delta + low;
+		resultCal = high * delta + low;
 	}
 
 	for (int i = 0; i < strlen(cString); i++)
@@ -48,9 +50,9 @@ void CPrinterView::_FormatInfo(HWND m_hWnd, char* cString, char* font, POINT pt)
 
 			for (int y = 0; y < fontHeight; ++y) {
 				for (int x = 0; x < fontWidth; ++x) {
-					bytebeg = (BYTE*)&font[(resultCal)*siglesize];
+					bytebeg = (char*)&font[(resultCal)*siglesize];
 					wantpixel = y * fontWidth + x;
-					::SetPixel(dc, pt.x + (i / 2 * fontWidth + x) % (50 * 16), pt.y + ((int)(i / 2 / 50) * 16) + y, getpixelStateInseries(bytebeg, wantpixel) ? 0 : 0xffffff);
+					::SetPixel(dc, pt.x + (i / 2 * fontWidth + x) % (50 * 16), pt.y + ((int)(i / 2 / 50) * 16) + y, getpixelStateInseries((char*)bytebeg, wantpixel) ? 0 : 0xffffff);
 
 				}
 			}
@@ -69,7 +71,7 @@ void CPrinterView::_FormatInfo(HWND m_hWnd, char* cString, char* font, POINT pt)
 			resultCal += startAscii;
 			for (int y = 0; y < fontHeight; ++y) {
 				for (int x = 0; x < fontWidth; ++x) {
-					bytebeg = (BYTE*)&font[(resultCal)*siglesize];
+					bytebeg = (char*)&font[(resultCal)*siglesize];
 					wantpixel = y * fontWidth + x;
 					::SetPixel(dc, pt.x + (i * fontWidth + x) % (50 * 16), pt.y + ((int)(i / 50) * 16) + y, getpixelStateInseries(bytebeg, wantpixel) ? 0 : 0xffffff);
 
@@ -81,7 +83,7 @@ void CPrinterView::_FormatInfo(HWND m_hWnd, char* cString, char* font, POINT pt)
 }
 
 
-int CPrinterView::getpixelStateInseries(BYTE* pointer, int bit)
+int CPrinterView::getpixelStateInseries(char* pointer, int bit)
 {
 	return pointer[bit / 8] & (1 << (7 - bit % 8)) ? 1 : 0;
 }
@@ -175,17 +177,108 @@ void CPrinterView::_SetUpDotMatrix(int* nPos, char* font, int height, int width,
 
 
 }
+void _TranslateFormatInGb2312(_UnCompiled* rslt, stateString_FORMAT* ori)
+{
 
+	rslt->TextX = (ori->param[0] & 0xff) + ((ori->param[1]  << 8) & 0x300);
+	rslt->lettercount = (ori->param[1] >> 2) & 0x3f;
+	rslt->width = ori->param[2] & 0xf;
+	rslt->height = (ori->param[2] >> 4) & 0xf;
+	rslt->width *= 8;
+	rslt->height *= 8;
+}
 
 /// <summary>
 /// create printing proc from a server format txt
 /// </summary>
 /// <param name="path"></param>
-void CPrinterView::_StringWithFont(char* path)
+void CPrinterView::_StringWithFont(HWND hd)
 {
+	CBasicOperation::ReadFile_InPath(L"path.ojulia", info, nLen);
+	char* monitor, * piece, * get;
+	get = (char*)info;
+	monitor = new char[10000];
+	monitor[0] = 0;
+	piece = new char[2560];
+	int state = 0;
+	int xpos, ypos = 0, lastposx = 0, lastheight = 0, wantpixel, resultCal = 0, siglesize = fontHeight * fontWidth / 8;
+	stateString_FORMAT getHead;
+	HDC dc = ::GetDC(hd);
+	char* byteBeg;
+	int lastWidth;
+
+	for (int i = 0; i < nLen; )
 	{
+		switch (state)
+		{
+		case 0:
+			//if (!get[i] && get[i + 1])
+			//{
+			//	ypos += lastheight;
+			//	i += 3;
+			//	lastposx = 999;
+			//	break;
+			//}
+			_TranslateFormatInGb2312(&m_FontGlobal, (stateString_FORMAT*)(get + i));
+			sprintf(piece, "\r\ntxtX:%d, lettercount:%d, width:%d, height:%d\r\n"
+				, m_FontGlobal.TextX
+				, m_FontGlobal.lettercount
+				, m_FontGlobal.width
+				, m_FontGlobal.height
+			);
+			strcat(monitor, piece);
+			state++;
+			i += 3;
+			xpos = m_FontGlobal.TextX;
+			if (m_FontGlobal.TextX <= lastposx)
+			{
+				ypos += fontWidth;
+			}
+			lastheight = m_FontGlobal.height;
+
+			if (m_FontGlobal.lettercount == 0)
+			{
+				ypos += fontWidth;
+				state = 0;
+			}
+			break;
+		case 1:
+		{
+			for (int j = 0; j < m_FontGlobal.lettercount; j++)
+			{
+				sprintf(piece, "%02x, %02x, ", *(get + i + j * 2 + 0) & 0xff, *(get + i + j * 2 + 1) & 0xff);
+				strcat(monitor, piece);
+				resultCal = (((*(get + i + j * 2 + 0) & 0x3f) << 8) & 0xff00) + (*(get + i + j * 2 + 1) & 0xff);
+				if (*(get + i + j * 2 + 0) & 0xff & _STRINGFONTBOLD)
+				{
+					byteBeg = (char*)&GB2312_BOLD_Def[(resultCal)*siglesize];
+				}
+				else
+					byteBeg = (char*)&GB2312_REGULAR_Def[(resultCal)*siglesize];
+				for (int y = 0; y < fontWidth; ++y) {
+					for (int x = 0; x < fontWidth; ++x) {
+						wantpixel = y * fontWidth + x;
+						::SetPixel(dc, xpos + x, ypos + y, getpixelStateInseries(byteBeg, wantpixel) ? 0 : 0xffffff);
+					}
+				}
+				if(*(get + i + j * 2 + 0) & _STRINGFONTASCI)
+					xpos += m_FontGlobal.width / 2;
+				else
+					xpos += m_FontGlobal.width;
+
+				lastposx = xpos;
+			}
+			state = 0;
+			i += m_FontGlobal.lettercount * 2;
+			break;
+
+		}
+		}
 
 	}
+	monitor;
+	delete piece;
+	delete monitor;
 }
 //qr <QR></QR>
 //bold <FB></FB>
