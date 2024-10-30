@@ -194,7 +194,7 @@ void _TranslateFormatInGb2312(_UnCompiled* rslt, stateString_FORMAT* ori)
 /// <param name="path"></param>
 void CPrinterView::_StringWithFont(HWND hd)
 {
-	CBasicOperation::ReadFile_InPath(L"path.ojulia", info, nLen);
+	CBasicOperation::ReadFile_InPath(L"C:\\cloud\\BaiduSyncdisk\\simo2\\AutoPrinter\\AutoPrinter\\path.ojulia", info, nLen);
 	char* monitor, * piece, * get;
 	get = (char*)info;
 	monitor = new char[10000];
