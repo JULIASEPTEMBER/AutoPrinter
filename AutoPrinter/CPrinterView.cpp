@@ -180,14 +180,18 @@ void CPrinterView::_SetUpDotMatrix(int* nPos, char* font, int height, int width,
 void _TranslateFormatInGb2312(_UnCompiled* rslt, stateString_FORMAT* ori)
 {
 
-	rslt->TextX = (ori->param[0] & 0xff) + ((ori->param[1]  << 8) & 0x300);
+	rslt->TextX = (ori->param[0] & 0xff) + ((ori->param[1] << 8) & 0x300);
 	rslt->lettercount = (ori->param[1] >> 2) & 0x3f;
 	rslt->width = ori->param[2] & 0xf;
 	rslt->height = (ori->param[2] >> 4) & 0xf;
 	rslt->width *= 8;
 	rslt->height *= 8;
+
+	if (*((char*)(ori + 1)) & _STRINGFONT_BEG && rslt->lettercount)rslt->RowBeg = 1;
+
 }
 
+#define monitor20241030
 /// <summary>
 /// create printing proc from a server format txt
 /// </summary>
@@ -228,48 +232,100 @@ void CPrinterView::_StringWithFont(HWND hd)
 			);
 			strcat(monitor, piece);
 			state++;
-			i += 3;
-			xpos = m_FontGlobal.TextX;
-			if (m_FontGlobal.TextX <= lastposx)
+			i += 3; if (m_FontGlobal.lettercount == 0)
 			{
-				ypos += fontWidth;
-			}
-			lastheight = m_FontGlobal.height;
-
-			if (m_FontGlobal.lettercount == 0)
-			{
-				ypos += fontWidth;
+				ypos += lastheight;
 				state = 0;
 			}
+			else if (m_FontGlobal.RowBeg)
+			{
+				ypos += lastheight;
+			}
+			else if (m_FontGlobal.TextX <= lastposx)
+			{
+				ypos += lastheight;
+			}
+			xpos = m_FontGlobal.TextX;
 			break;
 		case 1:
 		{
+			_currentLine.scaleTargetY = (float)_FontNormalHeight / (float)m_FontGlobal.height;
 			for (int j = 0; j < m_FontGlobal.lettercount; j++)
 			{
 				sprintf(piece, "%02x, %02x, ", *(get + i + j * 2 + 0) & 0xff, *(get + i + j * 2 + 1) & 0xff);
 				strcat(monitor, piece);
-				resultCal = (((*(get + i + j * 2 + 0) & 0x3f) << 8) & 0xff00) + (*(get + i + j * 2 + 1) & 0xff);
-				if (*(get + i + j * 2 + 0) & 0xff & _STRINGFONTBOLD)
+				resultCal = (((*(get + i + j * 2 + 0) & 0x1f) << 8) & 0xff00) + (*(get + i + j * 2 + 1) & 0xff);
+				if ((*(get + i + j * 2 + 0) & 0xff) & _STRINGFONTBOLD)
 				{
 					byteBeg = (char*)&GB2312_BOLD_Def[(resultCal)*siglesize];
 				}
 				else
 					byteBeg = (char*)&GB2312_REGULAR_Def[(resultCal)*siglesize];
-				for (int y = 0; y < fontWidth; ++y) {
-					for (int x = 0; x < fontWidth; ++x) {
-						wantpixel = y * fontWidth + x;
-						::SetPixel(dc, xpos + x, ypos + y, getpixelStateInseries(byteBeg, wantpixel) ? 0 : 0xffffff);
+				//for (int y = 0; y < fontWidth; ++y) {
+				//	for (int x = 0; x < fontWidth; ++x) {
+				//		wantpixel = y * fontWidth + x;
+				//		::SetPixel(dc, xpos + x, ypos + y, getpixelStateInseries(byteBeg, wantpixel) ? 0 : 0xffffff);
+				//	}
+				//}
+
+				if (*(get + i + j * 2 + 0) & _STRINGFONTASCI)
+					//if(0)// (*(get + i + j * 2 + 0) & _STRINGFONTASCI)
+				{
+#ifdef monitor20241030
+					for (int y = 0; y < m_FontGlobal.height; ++y) {
+						for (int x = m_FontGlobal.width / 4 + 1; x < m_FontGlobal.width; ++x) {
+							wantpixel = int(y * fontHeight / m_FontGlobal.height) * fontWidth + int(x * fontWidth / m_FontGlobal.width);
+							{
+								::SetPixel(dc, xpos + x - m_FontGlobal.width / 4, ypos + y, getpixelStateInseries(byteBeg, wantpixel) ? 0 : 0xffffff);
+							}
+						}
 					}
-				}
-				if(*(get + i + j * 2 + 0) & _STRINGFONTASCI)
+
 					xpos += m_FontGlobal.width / 2;
+#else
+					for (int y = 0; y < _FontNormalHeight; ++y) {
+						for (int x = m_FontGlobal.width / 4 + 1; x < m_FontGlobal.width; ++x) {
+							wantpixel = int(y * fontHeight / m_FontGlobal.height) * fontWidth + int(x * fontWidth / m_FontGlobal.width);
+							{
+								_SetDotMatrixInStandardStorage(x, y, getpixelStateInseries(byteBeg, wantpixel));
+							//	::SetPixel(dc, xpos + x - m_FontGlobal.width / 4, ypos + y, getpixelStateInseries(byteBeg, wantpixel) ? 0 : 0xffffff);
+							}
+						}
+					}
+					xpos += m_FontGlobal.width / 2;
+#endif
+				}
 				else
+				{
+#ifdef monitor20241030
+					for (int y = 0; y < m_FontGlobal.height; ++y) {
+						for (int x = 0; x < m_FontGlobal.width; ++x) {
+							wantpixel = int(y * fontHeight / m_FontGlobal.height) * fontWidth + int(x * fontWidth / m_FontGlobal.width);
+							{
+								::SetPixel(dc, xpos + x, ypos + y, getpixelStateInseries(byteBeg, wantpixel) ? 0 : 0xffffff);
+							}
+						}
+					}
+					xpos += m_FontGlobal.width;
+#else
+					for (int y = 0; y < _FontNormalHeight; ++y) {
+						for (int x = 0; x < m_FontGlobal.width; ++x) {
+							wantpixel = int(y * fontHeight / m_FontGlobal.height) * fontWidth + int(x * fontWidth / m_FontGlobal.width);
+							{
+								_SetDotMatrixInStandardStorage(x, y, getpixelStateInseries(byteBeg, wantpixel));
+								//::SetPixel(dc, xpos + x, ypos + y, getpixelStateInseries(byteBeg, wantpixel) ? 0 : 0xffffff);
+							}
+						}
+					}
 					xpos += m_FontGlobal.width;
 
+#endif
+				}
 				lastposx = xpos;
 			}
 			state = 0;
 			i += m_FontGlobal.lettercount * 2;
+			lastheight = m_FontGlobal.height;
 			break;
 
 		}
@@ -301,3 +357,18 @@ void CPrinterView::_StringWithFont(HWND hd)
 //CENTER <center></center>
 //LEFTRIGHT <LR></LR>
 //RIGHT <right></right>
+
+
+	//x is real y without scaling with maximum FONT_HEIGHT
+void CPrinterView::_SetDotMatrixInStandardStorage(int x, int y, int Pix)
+{
+	if (y < 8)
+	{
+		_currentLine.setbit[2 * x + 0] = Pix ? _currentLine.setbit[2 * x + 0] | (1 << y) : _currentLine.setbit[2 * x + 0] & ~(1 << y);
+	}
+	else
+	{
+		y -= 8;
+		_currentLine.setbit[2 * x + 1] = Pix ? _currentLine.setbit[2 * x + 1] | (1 << y) : _currentLine.setbit[2 * x + 1] & ~(1 << y);
+	}
+}
