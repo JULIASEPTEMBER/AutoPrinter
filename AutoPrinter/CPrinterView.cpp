@@ -186,12 +186,13 @@ void _TranslateFormatInGb2312(_UnCompiled* rslt, stateString_FORMAT* ori)
 	rslt->height = (ori->param[2] >> 4) & 0xf;
 	rslt->width *= 8;
 	rslt->height *= 8;
-
-	if (*((char*)(ori + 1)) & _STRINGFONT_BEG && rslt->lettercount)rslt->RowBeg = 1;
+	int k = (*((char*)(ori + 1)));
+	if (k & _STRINGFONT_BEG && rslt->lettercount)
+		rslt->RowBeg = 1;
 
 }
 
-#define monitor20241030
+//#define monitor20241030
 /// <summary>
 /// create printing proc from a server format txt
 /// </summary>
@@ -232,23 +233,30 @@ void CPrinterView::_StringWithFont(HWND hd)
 			);
 			strcat(monitor, piece);
 			state++;
-			i += 3; if (m_FontGlobal.lettercount == 0)
+			i += 3;
+			if (m_FontGlobal.lettercount == 0)
 			{
-				ypos += lastheight;
 				state = 0;
+				_currentLine.begY = ypos;
+				_Simulation_AutoPrint(dc, &_currentLine);
+				ypos += lastheight;
 			}
 			else if (m_FontGlobal.RowBeg)
 			{
+				m_FontGlobal.RowBeg = 0;
+				_currentLine.begY = ypos;
+				_Simulation_AutoPrint(dc, &_currentLine);
 				ypos += lastheight;
 			}
-			else if (m_FontGlobal.TextX <= lastposx)
-			{
-				ypos += lastheight;
-			}
+			//else if (m_FontGlobal.TextX <= lastposx)
+			//{
+			//	ypos += lastheight;
+			//}
 			xpos = m_FontGlobal.TextX;
 			break;
 		case 1:
 		{
+			_currentLine.nHeight = m_FontGlobal.height;
 			_currentLine.scaleTargetY = (float)_FontNormalHeight / (float)m_FontGlobal.height;
 			for (int j = 0; j < m_FontGlobal.lettercount; j++)
 			{
@@ -285,10 +293,10 @@ void CPrinterView::_StringWithFont(HWND hd)
 #else
 					for (int y = 0; y < _FontNormalHeight; ++y) {
 						for (int x = m_FontGlobal.width / 4 + 1; x < m_FontGlobal.width; ++x) {
-							wantpixel = int(y * fontHeight / m_FontGlobal.height) * fontWidth + int(x * fontWidth / m_FontGlobal.width);
+							wantpixel = int(y) * fontWidth + int(x * fontWidth / m_FontGlobal.width);
 							{
-								_SetDotMatrixInStandardStorage(x, y, getpixelStateInseries(byteBeg, wantpixel));
-							//	::SetPixel(dc, xpos + x - m_FontGlobal.width / 4, ypos + y, getpixelStateInseries(byteBeg, wantpixel) ? 0 : 0xffffff);
+								_SetDotMatrixInStandardStorage(xpos + x - m_FontGlobal.width / 4, y, getpixelStateInseries(byteBeg, wantpixel));
+								//	::SetPixel(dc, xpos + x - m_FontGlobal.width / 4, ypos + y, getpixelStateInseries(byteBeg, wantpixel) ? 0 : 0xffffff);
 							}
 						}
 					}
@@ -310,9 +318,9 @@ void CPrinterView::_StringWithFont(HWND hd)
 #else
 					for (int y = 0; y < _FontNormalHeight; ++y) {
 						for (int x = 0; x < m_FontGlobal.width; ++x) {
-							wantpixel = int(y * fontHeight / m_FontGlobal.height) * fontWidth + int(x * fontWidth / m_FontGlobal.width);
+							wantpixel = int(y) * fontWidth + int(x * fontWidth / m_FontGlobal.width);
 							{
-								_SetDotMatrixInStandardStorage(x, y, getpixelStateInseries(byteBeg, wantpixel));
+								_SetDotMatrixInStandardStorage(xpos + x, y, getpixelStateInseries(byteBeg, wantpixel));
 								//::SetPixel(dc, xpos + x, ypos + y, getpixelStateInseries(byteBeg, wantpixel) ? 0 : 0xffffff);
 							}
 						}
@@ -359,9 +367,10 @@ void CPrinterView::_StringWithFont(HWND hd)
 //RIGHT <right></right>
 
 
-	//x is real y without scaling with maximum FONT_HEIGHT
+	//x is real, y without scaling with maximum FONT_HEIGHT
 void CPrinterView::_SetDotMatrixInStandardStorage(int x, int y, int Pix)
 {
+	if (x > _DOT_PER_ROW - 1)return;
 	if (y < 8)
 	{
 		_currentLine.setbit[2 * x + 0] = Pix ? _currentLine.setbit[2 * x + 0] | (1 << y) : _currentLine.setbit[2 * x + 0] & ~(1 << y);
@@ -371,4 +380,24 @@ void CPrinterView::_SetDotMatrixInStandardStorage(int x, int y, int Pix)
 		y -= 8;
 		_currentLine.setbit[2 * x + 1] = Pix ? _currentLine.setbit[2 * x + 1] | (1 << y) : _currentLine.setbit[2 * x + 1] & ~(1 << y);
 	}
+}
+
+
+//simulate printer
+void CPrinterView::_Simulation_AutoPrint(HDC dc, _Printbuffer* printBuf)
+{
+	for (int j = 0; j < printBuf->nHeight; j++)
+	{
+		for (int i = 0; i < _DOT_PER_ROW; i++)
+		{
+			int gety = j * printBuf->scaleTargetY;
+			int state = (printBuf->setbit[i * 2 + 0] & 0xff) + ((printBuf->setbit[i * 2 + 1] << 8) & 0xff00);
+			state &= 1 << gety;
+			::SetPixel(dc, i, printBuf->begY + j, state ? 0 : 0xffffff);
+			//::SetPixel(dc, i, printBuf->begY + j, 0xffff);
+		}
+	}
+	for (int i = 0; i < _DOT_PER_ROW * 2 / 4; i++)
+		((int*)_currentLine.setbit)[i] = 0;
+
 }

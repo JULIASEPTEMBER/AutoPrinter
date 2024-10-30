@@ -55,12 +55,15 @@ public:
 	struct _Printbuffer{
 	char setbit[_DOT_PER_ROW * 2];
 	float scaleTargetY;
+	int nHeight;
 	int begY;
 	}_currentLine;
 
 	//x is real y without scaling with maximum FONT_HEIGHT
 	void _SetDotMatrixInStandardStorage(int x, int y, int Pix);
 	//simulate printer
-	void _Simulation_AutoPrint(_Printbuffer* printBuf);
+	void _Simulation_AutoPrint(HDC dc, _Printbuffer* printBuf);
+	
+
 };
 

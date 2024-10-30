@@ -44,11 +44,12 @@ IMPLEMENT_DYNCREATE(CAutoPrinterView, CView)
 		ON_WM_CREATE()
 	END_MESSAGE_MAP()
 	// CAutoPrinterView 构造/析构
-
+	CAutoPrinterView* pPointer;
 	CAutoPrinterView::CAutoPrinterView()
 	{
 
 		start = 1471;
+		pPointer = this;
 		// TODO: 在此处添加构造代码
 	}
 
@@ -307,7 +308,6 @@ IMPLEMENT_DYNCREATE(CAutoPrinterView, CView)
 		}
 		break;
 		case 'z':
-			m_PrinterView._StringWithFont(m_hWnd);
 			break;
 		case 't':
 		{
@@ -483,7 +483,11 @@ IMPLEMENT_DYNCREATE(CAutoPrinterView, CView)
 	{
 		while(1)
 		{
-			_PrintThread();
+
+			::Sleep(2000);
+			m_PrinterView._StringWithFont(pPointer->m_hWnd);
+			::Sleep(10000);
+			//_PrintThread();
 
 			::Sleep(10);
 		}
