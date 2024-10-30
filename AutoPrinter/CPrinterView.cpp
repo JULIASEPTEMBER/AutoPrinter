@@ -214,6 +214,7 @@ void CPrinterView::_StringWithFont(HWND hd)
 
 	for (int i = 0; i < nLen; )
 	{
+		info[i];
 		switch (state)
 		{
 		case 0:
@@ -401,3 +402,4 @@ void CPrinterView::_Simulation_AutoPrint(HDC dc, _Printbuffer* printBuf)
 		((int*)_currentLine.setbit)[i] = 0;
 
 }
+

@@ -489,7 +489,6 @@ IMPLEMENT_DYNCREATE(CAutoPrinterView, CView)
 			::Sleep(10000);
 			//_PrintThread();
 
-			::Sleep(10);
 		}
 		return 1;
 	}
