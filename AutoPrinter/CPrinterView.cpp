@@ -98,7 +98,7 @@ void CPrinterView::outputFontInText(char* font, char* as)
 	int fileWritePlace = 0;
 	int RowCountItem = 0, nRowCountItemMax = 32;//one letter a line
 
-	file = info;
+	file = info; 
 
 	//hFile = ::CreateFile(L"hzk16s", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, 0, NULL);
 	hFile = ::CreateFileA(font, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, 0, NULL);
