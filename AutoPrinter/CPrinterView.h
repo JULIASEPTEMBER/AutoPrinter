@@ -22,11 +22,14 @@ struct _UnCompiled {
 	int height;
 	int bold;
 	int font;
+	int RowBeg;
 };
 
-#define _DOT_PER_ROW   301
+#define _DOT_PER_ROW   380
 #define _STRINGFONTBOLD   0X80
 #define _STRINGFONTASCI   0X40
+#define _STRINGFONT_BEG   0X20
+#define _FontNormalHeight 16
 class CPrinterView
 {
 public:
@@ -48,5 +51,18 @@ public:
 	};
 	_UnCompiled m_FontGlobal;
 	void _StringWithFont(HWND hd);
+	
+	struct _Printbuffer{
+	char setbit[_DOT_PER_ROW * 2];
+	int nHeight;
+	int begY;
+	}_currentLine;
+
+	//x is real y without scaling with maximum FONT_HEIGHT
+	void _SetDotMatrixInStandardStorage(int x, int y, int Pix);
+	//simulate printer
+	void _Simulation_AutoPrint(HDC dc, _Printbuffer* printBuf);
+	
+
 };
 
