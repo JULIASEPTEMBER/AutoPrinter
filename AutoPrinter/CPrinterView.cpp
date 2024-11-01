@@ -204,7 +204,7 @@ void CPrinterView::_StringWithFont(HWND hd)
 	get = (char*)info;
 	monitor = new char[10000];
 	monitor[0] = 0;
-	piece = new char[2560];
+	piece = new char[2560]; 
 	int state = 0;
 	int xpos, ypos = 0, lastposx = 0, lastheight = 0, wantpixel, resultCal = 0, siglesize = fontHeight * fontWidth / 8;
 	stateString_FORMAT getHead;
