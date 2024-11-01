@@ -258,7 +258,6 @@ void CPrinterView::_StringWithFont(HWND hd)
 		case 1:
 		{
 			_currentLine.nHeight = m_FontGlobal.height;
-			_currentLine.scaleTargetY = (float)_FontNormalHeight / (float)m_FontGlobal.height;
 			for (int j = 0; j < m_FontGlobal.lettercount; j++)
 			{
 				sprintf(piece, "%02x, %02x, ", *(get + i + j * 2 + 0) & 0xff, *(get + i + j * 2 + 1) & 0xff);
@@ -276,6 +275,7 @@ void CPrinterView::_StringWithFont(HWND hd)
 				//		::SetPixel(dc, xpos + x, ypos + y, getpixelStateInseries(byteBeg, wantpixel) ? 0 : 0xffffff);
 				//	}
 				//}
+				//::Sleep(100);
 
 				if (*(get + i + j * 2 + 0) & _STRINGFONTASCI)
 					//if(0)// (*(get + i + j * 2 + 0) & _STRINGFONTASCI)
@@ -391,7 +391,7 @@ void CPrinterView::_Simulation_AutoPrint(HDC dc, _Printbuffer* printBuf)
 	{
 		for (int i = 0; i < _DOT_PER_ROW; i++)
 		{
-			int gety = j * printBuf->scaleTargetY;
+			int gety = j * _FontNormalHeight / printBuf->nHeight;
 			int state = (printBuf->setbit[i * 2 + 0] & 0xff) + ((printBuf->setbit[i * 2 + 1] << 8) & 0xff00);
 			state &= 1 << gety;
 			::SetPixel(dc, i, printBuf->begY + j, state ? 0 : 0xffffff);

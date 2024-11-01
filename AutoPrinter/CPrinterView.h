@@ -54,7 +54,6 @@ public:
 	
 	struct _Printbuffer{
 	char setbit[_DOT_PER_ROW * 2];
-	float scaleTargetY;
 	int nHeight;
 	int begY;
 	}_currentLine;
