@@ -221,7 +221,7 @@ void CPrinterView::_StringWithFont(HWND hd)
 			//if (!get[i] && get[i + 1])
 			//{
 			//	ypos += lastheight;
-			//	i += 3;
+			//	i += 3; 
 			//	lastposx = 999;
 			//	break;
 			//}
