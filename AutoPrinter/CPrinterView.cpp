@@ -211,20 +211,13 @@ void CPrinterView::_StringWithFont(HWND hd)
 	HDC dc = ::GetDC(hd);
 	char* byteBeg;
 	int lastWidth;
-
+	 
 	for (int i = 0; i < nLen; )
 	{
 		info[i];
 		switch (state)
 		{
 		case 0:
-			//if (!get[i] && get[i + 1])
-			//{
-			//	ypos += lastheight;
-			//	i += 3; 
-			//	lastposx = 999;
-			//	break;
-			//}
 			_TranslateFormatInGb2312(&m_FontGlobal, (stateString_FORMAT*)(get + i));
 			sprintf(piece, "\r\ntxtX:%d, lettercount:%d, width:%d, height:%d\r\n"
 				, m_FontGlobal.TextX
